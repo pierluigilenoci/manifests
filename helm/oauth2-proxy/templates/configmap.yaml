@@ -1,5 +1,4 @@
 {{- if not .Values.config.existingConfig }}
-{{- if .Values.config.configFile }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,6 +12,11 @@ metadata:
   name: {{ template "oauth2-proxy.fullname" . }}
   namespace: {{ template "oauth2-proxy.namespace" $ }}
 data:
+  {{- if and .Values.config.configFile (or (not .Values.alphaConfig.enabled) .Values.config.forceLegacyConfig) }}
   oauth2_proxy.cfg: {{ tpl .Values.config.configFile $ | quote }}
-{{- end }}
+  {{- else if .Values.alphaConfig.enabled }}
+  oauth2_proxy.cfg: {{ printf "email_domains = %s" (.Values.config.emailDomains | toJson) | quote }}
+  {{- else }}
+  oauth2_proxy.cfg: {{ printf "email_domains = %s\nupstreams = %s" (.Values.config.emailDomains | toJson) (.Values.config.upstreams | toJson) | quote }}
+  {{- end }}
 {{- end }}

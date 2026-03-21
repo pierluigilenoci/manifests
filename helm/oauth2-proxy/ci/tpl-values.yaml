@@ -14,7 +14,6 @@ oauth2-proxy:
   checkDeprecation: false
   config:
     clientSecret: '{{ $.Release.Name }}'
-    cookieName: '{{ $.Release.Name }}'
     configFile: |
       oidc_issuer_url = "https://{{ $.Release.Name }}/dex"
 
@@ -38,6 +37,7 @@ authenticatedEmailsFile:
 config:
   annotations:
     test-annotations/test: "{{ $.Release.Name }}"
+  cookieName: '{{ $.Release.Name }}'
 
 deploymentAnnotations:
   test-annotations/test: "{{ $.Release.Name }}"

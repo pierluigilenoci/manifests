@@ -30,6 +30,9 @@ extraVolumes:
         - key: secret
           path: secret
 
+imagePullSecrets:
+  - name: '{{ .Release.Name }}'
+
 authenticatedEmailsFile:
   annotations:
     test-annotations/test: "{{ $.Release.Name }}"

@@ -38,7 +38,6 @@ config:
   annotations:
     test-annotations/test: "{{ $.Release.Name }}"
   cookieName: '{{ $.Release.Name }}'
-  existingSecret: '{{ .Release.Name }}-oauth2-proxy'
 
 deploymentAnnotations:
   test-annotations/test: "{{ $.Release.Name }}"

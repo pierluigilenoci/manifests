@@ -18,5 +18,5 @@ alphaConfig:
 config:
   configFile: |-
     email_domains = [ "example.com" ]
-    pass_access_token = true
+    encode_state = true
   forceLegacyConfig: true

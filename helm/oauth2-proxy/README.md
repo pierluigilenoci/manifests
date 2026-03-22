@@ -148,7 +148,7 @@ With above new chart version won't add extra `-ha` suffix to all redis resources
 The following table lists the configurable parameters of the oauth2-proxy chart and their default values.
 
 | Parameter                                             | Description                                                                                                                                                                                                                                                      | Default                                                                                              |
-|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+|-------------------------------------------------------| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `affinity`                                            | node/pod affinities                                                                                                                                                                                                                                              | None                                                                                                 |
 | `alphaConfig.annotations`                             | Configmap annotations                                                                                                                                                                                                                                            | `{}`                                                                                                 |
 | `alphaConfig.configData`                              | Arbitrary configuration data to append                                                                                                                                                                                                                           | `{}`                                                                                                 |
@@ -174,11 +174,14 @@ The following table lists the configurable parameters of the oauth2-proxy chart 
 | `checkDeprecation`                                    | Enable deprecation checks                                                                                                                                                                                                                                        | `true`                                                                                               |
 | `config.clientID`                                     | oauth client ID                                                                                                                                                                                                                                                  | `""`                                                                                                 |
 | `config.clientSecret`                                 | oauth client secret                                                                                                                                                                                                                                              | `""`                                                                                                 |
-| `config.configFile`                                   | custom [oauth2_proxy.cfg](https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/oauth2-proxy.cfg.example) contents for settings not overridable via environment nor command line                                                                      | `""`                                                                                                 |
+| `config.configFile`                                   | custom [oauth2_proxy.cfg](https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/oauth2-proxy.cfg.example) contents for settings not overridable via environment nor command line. Ignored when `alphaConfig.enabled=true` and `config.forceLegacyConfig=false` | `""`                                                                                                 |
 | `config.cookieName`                                   | The name of the cookie that oauth2-proxy will create.                                                                                                                                                                                                            | `""`                                                                                                 |
 | `config.cookieSecret`                                 | server specific cookie for the secret; create a new one with `openssl rand -base64 32 \| head -c 32 \| base64`                                                                                                                                                   | `""`                                                                                                 |
-| `config.existingConfig`                               | existing Kubernetes configmap to use for the configuration file. See [config template](https://github.com/oauth2-proxy/manifests/blob/master/helm/oauth2-proxy/templates/configmap.yaml) for the required values                                                 | `nil`                                                                                                |
+| `config.upstreams`                                    | Legacy upstreams used only when the chart generates `oauth2_proxy.cfg` and `alphaConfig` is disabled. Under `alphaConfig`, define upstreams in `alphaConfig.configData.upstreamConfig`                                                                          | `['file:///dev/null']`                                                                               |
+| `config.emailDomains`                                 | Email domains used when the chart generates `oauth2_proxy.cfg`. This remains the only generated legacy setting when `alphaConfig.enabled=true`                                                                                                                   | `['*']`                                                                                              |
+| `config.existingConfig`                               | existing Kubernetes configmap to use for the configuration file. Ignored when `alphaConfig.enabled=true` and `config.forceLegacyConfig=false`. See [config template](https://github.com/oauth2-proxy/manifests/blob/master/helm/oauth2-proxy/templates/configmap.yaml) for the required values | `nil`                                                                                                |
 | `config.existingSecret`                               | existing Kubernetes secret to use for OAuth2 credentials. See [oauth2-proxy.secrets helper](https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/templates/_helpers.tpl#L157C13-L157C33) for the required values                                | `nil`                                                                                                |
+| `config.forceLegacyConfig`                            | When `alphaConfig.enabled=true`, keep using custom legacy `config.configFile` or `config.existingConfig` when `true`; when `false`, ignore both and generate only `email_domains` in `oauth2_proxy.cfg`                                                         | `true`                                                                                               |
 | `config.google.adminEmail`                            | user impersonated by the Google service account                                                                                                                                                                                                                  | `""`                                                                                                 |
 | `config.google.existingConfig`                        | existing Kubernetes configmap to use for the service account file. See [Google secret template](https://github.com/oauth2-proxy/manifests/blob/master/helm/oauth2-proxy/templates/google-secret.yaml) for the required values                                    | `nil`                                                                                                |
 | `config.google.groups`                                | restrict logins to members of these Google groups                                                                                                                                                                                                                | `[]`                                                                                                 |
@@ -372,7 +375,7 @@ gatewayApi:
     example.com/annotation: "value"
 ```
 
-If you don't specify custom rules, the chart will create a default rule that matches all paths with `PathPrefix: /` and routes to the oauth2-proxy service. 
+If you don't specify custom rules, the chart will create a default rule that matches all paths with `PathPrefix: /` and routes to the oauth2-proxy service.
 If you don't specify a sectionName, the rules will be applied to all listeners of the referenced Gateway.
 
 ## TLS Configuration
@@ -461,7 +464,11 @@ extraObjects:
 ```
 
 ## Multi whitelist-domain configuration
-You must use the config.configFile section for a multi-whitelist-domain configuration for one Oauth2-proxy instance.
+Use the structured `config.emailDomains` and `config.upstreams` values when they cover your case.
+
+Use `config.configFile` only when you need legacy `oauth2_proxy.cfg` settings that are not exposed as structured chart values, such as `whitelist_domains`.
+
+When `alphaConfig.enabled=true`, upstreams belong in `alphaConfig.configData.upstreamConfig`. If you also set `config.forceLegacyConfig=false`, the chart ignores both `config.configFile` and `config.existingConfig` and generates a minimal legacy config with only `email_domains`.
 
 It will be overwriting the `/etc/oauth2_proxy/oauth2_proxy.cfg` [configuration file](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview#config-file).
 In this example, Google provider is used, but you can find all other provider configurations here [oauth_provider](https://oauth2-proxy.github.io/oauth2-proxy/configuration/providers/).
@@ -481,6 +488,15 @@ config:
     whitelist_domains = [ ".domain.com", ".example.io"]
     provider = "google"
 ```
+
+## Alpha config migration
+When moving to `alphaConfig`, keep one main-config source in mind:
+
+1. The chart always mounts `/etc/oauth2_proxy/oauth2_proxy.cfg`.
+2. If `config.forceLegacyConfig=false`, the chart ignores both the `config.configFile` and `config.existingConfig` overrides and only generates a minimal necessary legacy config.
+3. If `config.existingConfig` is set and `config.forceLegacyConfig=true`, the external ConfigMap is mounted into the mounted file.
+4. If `config.configFile` is set and `config.forceLegacyConfig=true`, the chart renders that inline content into the mounted file.
+5. Put upstream definitions in `alphaConfig.configData.upstreamConfig`, not in the legacy `config.upstreams` or a legacy config file which will be ignored by the alpha mode.
 
 ## Route requests to sidecar container
 You can route requests to a sidecar container first by setting the `service.targetPort` variable. The possible values for the targetPort field of a Kubernetes Service can be either a port number or the name of a port defined in the pod. By default, the service's `targetPort` value equals to `httpSchema`'s.

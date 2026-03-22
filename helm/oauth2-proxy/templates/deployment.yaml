@@ -27,8 +27,8 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if not .Values.config.existingConfig }}
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if ne (include "oauth2-proxy.legacy-config.mode" .) "existing-configmap" }}
+        checksum/config: {{ include "oauth2-proxy.legacy-config.content" . | sha256sum }}
         {{- end }}
         {{- if .Values.alphaConfig.enabled }}
         checksum/alpha-config: {{ include "oauth2-proxy.alpha-config" . | sha256sum }}
@@ -370,7 +370,7 @@ spec:
 {{- end }}
       - configMap:
           defaultMode: 420
-          name: {{ if .Values.config.existingConfig }}{{ .Values.config.existingConfig }}{{ else }}{{ template "oauth2-proxy.fullname" . }}{{ end }}
+          name: {{ include "oauth2-proxy.legacy-config.name" . | trim }}
         name: configmain
 {{- if .Values.alphaConfig.enabled }}
 {{- if .Values.alphaConfig.existingConfig }}

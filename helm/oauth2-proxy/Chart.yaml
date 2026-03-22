@@ -50,8 +50,3 @@ annotations:
       links:
         - name: GitHub Issue
           url: https://github.com/oauth2-proxy/manifests/issues/311
-    - kind: added
-      description: Documented external secrets usage with alphaConfig via extraEnv (Azure Key Vault CSI Driver example)
-      links:
-        - name: GitHub Issue
-          url: https://github.com/oauth2-proxy/manifests/issues/302

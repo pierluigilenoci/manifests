@@ -56,40 +56,41 @@ config:
     #  - group1@example.com
     #  - group2@example.com
   #
-  # Configuration file generation / precedence
-  # 1. If config.existingConfig is set, that external ConfigMap is used
-  #    and no chart-managed ConfigMap is generated. configFile,
-  #    emailDomains and upstreams are all ignored.
-  # 2. If configFile is set, it takes precedence over the structured
-  #    config below (except when alphaConfig.enabled=true and
-  #    forceLegacyConfig=false, in which case configFile is ignored).
+  # Configuration file generation precedence
+  # 1. If configFile is set, it takes precedence over the structured
+  #    config below.
+  # 2. When alphaConfig.enabled=true and forceLegacyConfig=false,
+  #    both configFile and existingConfig are ignored and the chart
+  #    generates a minimal legacy config from emailDomains only.
   # 3. If configFile is empty/not set, the config is auto-generated
-  #    from emailDomains and upstreams.
+  #    from emailDomains and, when alphaConfig is disabled, upstreams.
   configFile: ""
-  # Email domains allowed to authenticate (used when configFile is
-  # empty)
+  # Email domains allowed to authenticate when the chart generates
+  # the main oauth2_proxy.cfg.
+  # This is always included in generated config, including the
+  # minimal alphaConfig-compatible legacy config.
   emailDomains: ["*"]
-  # Legacy upstream configuration (used when configFile is empty
-  # and alphaConfig is disabled)
+  # Legacy upstream configuration used only when the chart generates
+  # oauth2_proxy.cfg and alphaConfig is disabled.
   # When alphaConfig.enabled is true, define upstreams in
-  # alphaConfig.configData.upstreamConfig instead
+  # alphaConfig.configData.upstreamConfig instead.
   upstreams: ["file:///dev/null"]
   # Behavior when using alphaConfig together with a custom config file
   #
   # This flag only has an effect when:
   #   - alphaConfig.enabled is true, AND
-  #   - you provide a custom config.configFile.
+  #   - you provide a custom config.configFile or config.existingConfig.
   #
   # Auto-generated config when alphaConfig.enabled=true is always a
   # minimal legacy config (no upstreams), regardless of this flag.
   #
-  # When true (default): Honor a custom configFile
+  # When true (default): Honor a custom configFile/existingConfig
   # even when alphaConfig.enabled=true. If your custom config still
   # contains deprecated options (for example 'upstreams'),
   # oauth2-proxy may fail with:
   #   "failed to load core options: '' has invalid keys: upstreams"
   #
-  # When false: Ignore any custom configFile when
+  # When false: Ignore any custom configFile/existingConfig when
   # alphaConfig.enabled=true and instead generate the minimal
   # legacy config. This preserves compatibility and avoids
   # invalid legacy options such as 'upstreams'.
@@ -102,7 +103,8 @@ config:
   #      is alpha-compatible (remove 'upstreams' and any other
   #      keys no longer supported).
   # 2) Set forceLegacyConfig: false:
-  #    - The chart will ignore config.configFile for alphaConfig.
+  #    - The chart will ignore config.configFile and
+  #      config.existingConfig for alphaConfig.
   #    - Define upstreams in alphaConfig.configData.upstreamConfig
   #      instead (see examples below).
   #    - Move any other relevant settings into alphaConfig and/or
@@ -110,15 +112,18 @@ config:
   forceLegacyConfig: true
   #
   # Custom configuration file: oauth2_proxy.cfg (overrides
-  # emailDomains and upstreams)
+  # emailDomains and upstreams when it is honored)
   # Example:
   # configFile: |-
   #   email_domains = [ "*" ]
   #   pass_basic_auth = false
   #   pass_access_token = true
   # Use an existing config map (see configmap.yaml for required fields)
+  # This is ignored when alphaConfig.enabled=true and
+  # forceLegacyConfig=false.
   # Example:
   # existingConfig: config
+  existingConfig: ~
 
 alphaConfig:
   enabled: false

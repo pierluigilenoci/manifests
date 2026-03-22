@@ -27,4 +27,4 @@ extraObjects:
     data:
       oauth2_proxy.cfg: |
         email_domains = [ "legacy.example.com" ]
-        pass_access_token = true
+        encode_state = true

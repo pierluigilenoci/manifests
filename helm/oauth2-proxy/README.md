@@ -490,13 +490,21 @@ config:
 ```
 
 ## Alpha config migration
-When moving to `alphaConfig`, keep one main-config source in mind:
+When moving to `alphaConfig`, keep one main config source in mind. The Alpha Config will take precedence and all options
+that are already supported by the Alpha Config will need to be removed from the legacy toml config. Have a look at the 
+[Alpha Config documentation](https://oauth2-proxy.github.io/oauth2-proxy/configuration/alpha-config/).
 
-1. The chart always mounts `/etc/oauth2_proxy/oauth2_proxy.cfg`.
-2. If `config.forceLegacyConfig=false`, the chart ignores both the `config.configFile` and `config.existingConfig` overrides and only generates a minimal necessary legacy config.
-3. If `config.existingConfig` is set and `config.forceLegacyConfig=true`, the external ConfigMap is mounted into the mounted file.
-4. If `config.configFile` is set and `config.forceLegacyConfig=true`, the chart renders that inline content into the mounted file.
-5. Put upstream definitions in `alphaConfig.configData.upstreamConfig`, not in the legacy `config.upstreams` or a legacy config file which will be ignored by the alpha mode.
+Keep the following in mind:
+
+- The chart always mounts `/etc/oauth2_proxy/oauth2_proxy.cfg`. (Legacy toml config)
+- Per default `config.forceLegacyConfig` is `true`
+
+The evaluation happens in the following order:
+
+1. If `config.forceLegacyConfig=false`, the chart ignores both the `config.configFile` and `config.existingConfig` overrides and only generates a minimal necessary legacy config.
+2. If `config.existingConfig` is set and `config.forceLegacyConfig=true`, the external ConfigMap is used as the mounted file.
+3. If `config.configFile` is set and `config.forceLegacyConfig=true`, the chart renders that inline content into the mounted file.
+4. Reminder: Put your upstream definitions inot `alphaConfig.configData.upstreamConfig`, not in the legacy `config.upstreams` or a legacy config file which will cause an error with the alpha config.
 
 ## Route requests to sidecar container
 You can route requests to a sidecar container first by setting the `service.targetPort` variable. The possible values for the targetPort field of a Kubernetes Service can be either a port number or the name of a port defined in the pod. By default, the service's `targetPort` value equals to `httpSchema`'s.

@@ -1,5 +1,5 @@
 name: oauth2-proxy
-version: 10.4.3
+version: 10.5.0
 apiVersion: v2
 appVersion: 7.15.2
 home: https://oauth2-proxy.github.io/oauth2-proxy/
@@ -30,7 +30,7 @@ maintainers:
 kubeVersion: ">=1.16.0-0"
 annotations:
   artifacthub.io/changes: |
-    - kind: fixed
+    - kind: added
       description: Add no-config legacy mode for external config management
       links:
         - name: GitHub PR

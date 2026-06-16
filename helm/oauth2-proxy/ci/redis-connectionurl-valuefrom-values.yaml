@@ -67,6 +67,7 @@ extraObjects:
     kind: ConfigMap
     metadata:
       name: redis-connection-config
+      namespace: "{{ .Release.Namespace }}"
     data:
       REDIS_HOST_URI: "redis://redis-fixed:6379"
 

@@ -51,7 +51,7 @@ import re
 import sys
 
 REPO = "oauth2-proxy/manifests"
-BREAKING_PATTERN = re.compile(r"break|BREAKING|remov|deprecat", re.IGNORECASE)
+BREAKING_PATTERN = re.compile(r"break|remov|deprecat", re.IGNORECASE)
 PR_PATTERN = re.compile(r"#(\d+)")
 
 
